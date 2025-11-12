@@ -1,0 +1,74 @@
+# .github/workflows/ci-tests.yml
+
+name: CI Tests (Unit & E2E)
+
+# 이 워크플로우가 실행될 시점:
+on:
+  # 1. main 브랜치로 push 될 때
+  push:
+    branches: [main]
+  # 2. main 브랜치를 대상으로 하는 pull_request 가 열리거나 업데이트 될 때
+  pull_request:
+    branches: [main]
+
+jobs:
+  # --- Job 1: 린트 및 단위 테스트 ---
+  # 이 작업은 코드 스타일을 검사하고 단위 테스트를 실행합니다.
+  unit-test-and-lint:
+    name: Lint & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 사용 중인 Node.js 버전에 맞게 설정
+          cache: 'npm' # npm 종속성 캐시
+
+      - name: Install dependencies
+        run: npm ci # package-lock.json 기반으로 설치
+
+      - name: Run lint
+        # package.json에 'lint' 스크립트가 있어야 합니다. (예: "lint": "next lint")
+        run: npm run lint
+
+      - name: Run unit tests
+        # package.json에 'test' 스크립트가 있어야 합니다. (예: "test": "jest")
+        run: npm run test
+
+  # --- Job 2: E2E 테스트 ---
+  # 이 작업은 실제 브라우저 환경에서 E2E 테스트를 실행합니다.
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    # 'unit-test-and-lint' 작업이 성공해야만 E2E 테스트를 실행합니다.
+    needs: unit-test-and-lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # E2E 테스트는 실제 빌드된 애플리케이션을 대상으로 실행해야 합니다.
+      - name: Build Next.js project
+        run: npm run build
+
+      # (중요) E2E 테스트 실행 단계
+      # 이 단계는 E2E 도구(Cypress, Playwright 등) 설정에 따라 다릅니다.
+      # 아래는 'start-server-and-test' 패키지를 사용한 예시입니다.
+      - name: Run E2E tests
+        # package.json에 "test:e2e" 스크립트가 설정되어 있다고 가정합니다.
+        # (아래 'E2E 테스트 설정' 설명 참고)
+        run: npm run test:e2e
