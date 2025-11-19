@@ -1,114 +1,392 @@
-# KB국민은행 바이트디그리 과정 최종 과제
+# 🎬 Next.js 15 Movie App - E2E Sentry CICD Practice
 
-![과제 프로젝트 완성 예시](./public/movie-app.jpg)
+영화 검색 애플리케이션 프로젝트로, **단위 테스트**, **E2E 테스트**, **CI/CD 파이프라인**이 완벽하게 통합되어 있습니다.
 
-## 요구사항
+## 📋 목차
 
-- 아래의 테스트 작성, 실시간 오류 모니터링, Git & GitHub 활용, 배포 등의 필수 및 선택 요구사항을 충족시켜야 합니다.  
-- 최종 완성된 과제 프로젝트의 원격 저장소와 배포 주소를 제출해야 합니다.
-- 2025년 11월 21일까지 제출해야 합니다.  
-- 필수 요구사항 충족은 만점이 아닙니다, 선택 요구사항을 구현하고 가산점을 획득하세요.(일부 상대 평가)
-- 선택 요구사항을 구현하는 경우, `/README.md` 파일 등에 구체적으로 내용을 명시하는 것을 추천합니다.
-- 과제 진행 중 궁금한 사항은 디스코드 질문 채널에 문의하세요.
+- [프로젝트 개요](#프로젝트-개요)
+- [테스트 구조](#테스트-구조)
+- [단위 테스트](#단위-테스트)
+- [E2E 테스트](#e2e-테스트)
+- [CI/CD 파이프라인](#cicd-파이프라인)
+- [테스트 실행 방법](#테스트-실행-방법)
+- [기술 스택](#기술-스택)
 
-### 1. 테스트 작성
+---
 
-- `npm test` 명령으로 실행하는 모든 단위 테스트 시나리오가 통과해야 합니다.
-- `npm run test:coverage` 명령으로 측정하는 모든 파일의 단위 테스트 커버리지가 80% 이상이어야 합니다.
-- 아래의 제안 시나리오 대신 컴포넌트에 맞는 자신만의 테스트 시나리오를 추가해도 좋습니다.
+## 🎯 프로젝트 개요
 
-#### MovieItem
+OMDb API를 활용한 영화 검색 애플리케이션입니다. Next.js 15, React 19, TypeScript를 기반으로 하며, TanStack Query를 사용한 상태 관리, Zustand를 활용한 전역 상태 관리, 그리고 Sentry를 통한 에러 모니터링을 포함합니다.
 
-- `/__tests__/components/MovieItem.test.tsx` 파일에서 테스트를 작성합니다.
-- 다음 시나리오들을 테스트합니다.
-  - 영화 아이템이 정상적으로 렌더링된다
-  - 영화 제목과 연도가 올바르게 표시된다
-  - 영화 포스터 이미지가 올바른 속성으로 렌더링된다
-  - 영화 상세 페이지로 이동하는 링크가 올바른 href를 가진다
-  - 포스터 보기 버튼을 클릭하면 포스터 페이지로 이동한다
+---
 
-#### MovieList
+## 🧪 테스트 구조
 
-- `/__tests__/components/MovieList.test.tsx` 파일에서 테스트를 작성합니다.
-- 다음 시나리오들을 테스트합니다.
-  - 영화 목록이 정상적으로 렌더링된다
-  - 영화 목록이 비어있고 메시지가 있을 때 메시지가 표시된다
-  - 영화 목록이 있을 때는 메시지가 표시되지 않는다
-  - 영화 목록이 undefined일 때 메시지가 표시된다
+프로젝트는 다음과 같은 테스트 구조를 가지고 있습니다:
 
-#### SearchBar
+```
+e2e-sentry-cicd-practice/
+├── __tests__/                    # 단위 테스트 디렉토리
+│   ├── components/               # 컴포넌트 테스트 (7개)
+│   │   ├── Button.test.tsx
+│   │   ├── Header.test.tsx
+│   │   ├── Headline.test.tsx
+│   │   ├── Loader.test.tsx
+│   │   ├── MovieItem.test.tsx
+│   │   ├── MovieList.test.tsx
+│   │   └── SearchBar.test.tsx
+│   ├── hooks/                    # 커스텀 훅 테스트
+│   │   └── movies.test.tsx
+│   └── app/                      # API 라우트 테스트
+│       └── api/
+│           └── movies/
+│               └── route.test.ts
+├── cypress/                      # E2E 테스트 디렉토리
+│   ├── e2e/
+│   │   └── e2e-test.cy.ts       # E2E 테스트 (5개 시나리오)
+│   ├── fixtures/
+│   └── support/
+├── jest.config.ts                # Jest 설정
+├── jest.setup.ts                 # Jest 초기 설정
+└── cypress.config.ts             # Cypress 설정
+```
 
-- `/__tests__/components/SearchBar.test.tsx` 파일에서 테스트를 작성합니다.
-- 다음 시나리오들을 테스트합니다.
-  - 검색 바가 정상적으로 렌더링된다
-  - 입력 필드에 텍스트를 입력하면 setInputText가 호출된다
-  - Reset 버튼을 클릭하면 resetMovies가 호출된다
-  - form 제출 시 setSearchText가 호출된다
-  - isFetching이 true일 때 Search 버튼에 로딩 상태가 표시된다
-  - Search 버튼은 submit 타입이다
+---
 
-#### Movies API
+## 🔬 단위 테스트
 
-- `/api/movies/route.ts` 파일에서 테스트를 작성합니다.
-- 다음 시나리오들을 테스트합니다.
-  - title 파라미터로 OMDB API를 호출하고 응답을 반환한다
-  - API_KEY가 환경변수에서 올바르게 사용된다
+### 테스트 프레임워크
 
-#### Movies Hooks
+- **Jest**: JavaScript 테스트 프레임워크
+- **React Testing Library**: React 컴포넌트 테스트 라이브러리
+- **@testing-library/user-event**: 사용자 이벤트 시뮬레이션
+- **MSW (Mock Service Worker)**: API 모킹
 
-- `/__tests__/hooks/movies.test.tsx` 파일에서 테스트를 작성합니다.
-- 다음 시나리오들을 테스트합니다.
-  - useMoviesStore
-    - setInputText가 inputText를 업데이트한다
-    - setSearchText가 searchText를 업데이트한다
-    - setMessage가 message를 업데이트한다
-    - resetMovies가 모든 상태를 초기화한다
-  - useMovies
-    - searchText가 비어있을 때 빈 배열을 반환한다
-    - searchText가 있을 때 API를 호출하고 영화 목록을 반환한다
-    - API가 False Response를 반환할 때 에러를 던진다
-    - 공백만 있는 searchText는 빈 배열을 반환한다
-    - isFetching이 로딩 상태를 올바르게 반영한다
-   
-#### E2E 테스트 추가 (선택 및 가산점)
+### Jest 설정
 
-- Playwright 혹은 Cypress 등의 도구를 활용해 E2E 테스트를 환경을 구성합니다.
-- E2E 테스트 시나리오를 5개 이상 작성합니다.
-- 모든 E2E 테스트가 통과합니다.
+```typescript
+// jest.config.ts
+{
+  coverageProvider: 'v8',
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1'
+  }
+}
+```
 
-### 2. 실시간 오류 모니터링 도구
+### 컴포넌트 테스트 (7개 파일)
 
-Sentry를 활용하여 실시간 오류 모니터링을 구현합니다.
+#### 1. Button.test.tsx
+- 기본 버튼 렌더링 테스트
+- children props 표시 확인
+- color prop 스타일 적용 확인
+- loading 상태 시 Loader 컴포넌트 표시
+- onClick 이벤트 핸들러 동작 확인
 
-- [Sentry](https://sentry.io/) 서비스에 가입(무료)합니다.
-- 과제 프로젝트에 [Sentry SDK를 설치](https://docs.sentry.io/platforms/javascript/guides/nextjs/)합니다.
-- Sentry 프로젝트 이름에 자신의 영어 이름을 포함합니다.(예: `parkyoungwoong-movie-app`)
-- 샘플 에러를 발생시켜 Sentry에 전송합니다.
-- Sentry Dashboard / Issues 페이지에서 확인한 샘플 에러를 스크린샷으로 촬영합니다.
-- 촬영한 스크린샷을 과제 프로젝트의 루트 경로에 `sentry-screenshot-1` 이름으로 한 장 이상 첨부합니다.
+#### 2. Header.test.tsx
+- 헤더 컴포넌트 렌더링 확인
+- 로고 및 네비게이션 요소 테스트
 
-![Sentry 예제 에러](./public/sentry-error-sample.jpg)
+#### 3. Headline.test.tsx
+- 제목 컴포넌트 렌더링 테스트
+- 텍스트 내용 확인
 
-### 3. Git & GitHub 활용
+#### 4. Loader.test.tsx
+- 로딩 스피너 렌더링 테스트
+- 커스텀 색상 prop 적용 확인
+- 애니메이션 스타일 검증
 
-- 모든 코드 변경 사항은 Git & GitHub를 활용하여 관리합니다.
-- GitHub 원격 저장소를 공개(Public)로 생성하고 완성한 최종 과제 프로젝트를 업로드(Push)한 후 저장소 주소를 제출합니다.
+#### 5. MovieItem.test.tsx
+- 영화 아이템 카드 렌더링
+- 영화 정보 표시 확인 (제목, 연도, 포스터)
+- 링크 동작 테스트
 
-### 4. 배포
+#### 6. MovieList.test.tsx
+- 영화 목록 렌더링
+- 빈 상태 처리
+- 영화 아이템 배열 렌더링 확인
 
-Vercel 혹은 AWS 등을 활용해 프로젝트를 배포합니다.
+#### 7. SearchBar.test.tsx
+- 검색 입력 필드 렌더링
+- 텍스트 입력 이벤트 처리
+- 검색 버튼 클릭 이벤트
+- 리셋 버튼 동작 확인
 
-- GitHub 원격 저장소에 업로드한 과제 프로젝트를 원하는 서비스를 통해 배포합니다.
-- 환경변수를 지정해 배포된 사이트에서 실제 영화를 검색할 수 있어야 합니다.
-- 확인 가능하도록 배포된 과제 프로젝트의 URL 주소를 제출합니다.
+### 커스텀 훅 테스트
 
-### 5. GitHub Actions 작성 (선택 및 가산점)
+#### movies.test.tsx
+**useMoviesStore 테스트:**
+- `setInputText()` - 입력 텍스트 업데이트
+- `setSearchText()` - 검색 텍스트 업데이트
+- `setMessage()` - 메시지 상태 업데이트
+- `resetMovies()` - 모든 상태 초기화
 
-- CI/CD를 위한 GitHub Actions를 작성합니다.
-- 단위 테스트나 E2E 테스트 통합 등이 반영돼야 합니다.
-- 기타 적용 내용에 따라 가산점이 부여됩니다.
+**useMovies 테스트:**
+- 빈 searchText 처리 (빈 배열 반환)
+- API 호출 및 영화 목록 반환
+- API 에러 응답 처리
+- 공백만 있는 searchText 처리
+- isFetching/isLoading 상태 확인
 
-### 6. 성능 최적화 (선택 및 가산점)
+### API 라우트 테스트
 
-- 프로젝트의 성능 최적화를 위한 작업(번들 사이즈, 대체 모듈 반영, 배럴 파일 제거 등)을 반영하고 `/README.md` 파일 등에 해당 내용을 구체적으로 명시하고 프로젝트와 같이 확인 가능하도록 제출합니다.
-- 합리적인 성능 최적화 적용 내용에 따라 가산점이 부여됩니다.
+#### route.test.ts
+- `GET /api/movies` - title 파라미터로 OMDB API 호출
+- 응답 데이터 검증
+- OMDB_API_KEY 환경변수 사용 확인
+
+---
+
+## 🌐 E2E 테스트
+
+### 테스트 프레임워크
+
+- **Cypress**: E2E 테스트 프레임워크
+
+### Cypress 설정
+
+```typescript
+// cypress.config.ts
+{
+  e2e: {
+    baseUrl: 'https://e2e-sentry-cicd-practice.vercel.app/',
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+    }
+  }
+}
+```
+
+### E2E 테스트 시나리오 (5개)
+
+#### 시나리오 1: 페이지 방문 확인
+```typescript
+it('메인 페이지에 접속했을 때 타이틀이 보여야 합니다.', () => {
+  cy.get('h1').contains('OMDb API')
+})
+```
+- 메인 페이지 접속
+- h1 태그에 'OMDb API' 텍스트 확인
+
+#### 시나리오 2: 샘플 무비 버튼 클릭
+```typescript
+it("샘플무비 버튼을 클릭하면 'Frozen II' 데이터가 로드되어야 합니다.", () => {
+  cy.contains('📽️ Sample Movie').click()
+  cy.get('h1').contains('Frozen II')
+})
+```
+- '📽️ Sample Movie' 버튼 클릭
+- 'Frozen II' 영화 데이터 로드 확인
+
+#### 시나리오 3: 영화 검색
+```typescript
+it("'star wars' 검색 시 10개의 영화 결과가 보여야 합니다.", () => {
+  cy.get('[data-testid="input-text"]').type('star wars')
+  cy.get('[data-testid="button-search"]').click()
+  cy.get('li.group').should('have.length', 10)
+})
+```
+- 검색어 'star wars' 입력
+- 검색 버튼 클릭
+- 10개의 영화 결과 표시 확인
+
+#### 시나리오 4: 영화 상세 페이지 이동
+```typescript
+it('검색된 영화 포스터 클릭 시 상세 페이지로 이동해야 합니다.', () => {
+  cy.get('[data-testid="input-text"]').type('star wars')
+  cy.get('[data-testid="button-search"]').click()
+  cy.get('li.group').first().find('a').click()
+  cy.url().should('include', '/movies/')
+  cy.get('h1').should('contain.text', 'Star Wars')
+})
+```
+- 'star wars' 검색
+- 첫 번째 영화 포스터 클릭
+- 상세 페이지로 이동 확인 (`/movies/` URL 포함)
+- 영화 제목 표시 확인
+
+#### 시나리오 5: Reset 버튼
+```typescript
+it('Reset 버튼 클릭 시 검색창과 결과 화면이 초기화되어야 합니다.', () => {
+  cy.get('[data-testid="input-text"]').type('star wars')
+  cy.get('[data-testid="button-search"]').click()
+  cy.get('[data-testid="button-reset"]').click()
+  cy.get('[data-testid="input-text"]').should('have.value', '')
+  cy.contains('p', 'Search for the movie title!')
+})
+```
+- 'star wars' 검색
+- Reset 버튼 클릭
+- 검색창 초기화 확인
+- 초기 메시지 표시 확인
+
+---
+
+## 🚀 CI/CD 파이프라인
+
+### GitHub Actions 워크플로우
+
+파일 위치: `.github/workflows/ci.yml`
+
+### 워크플로우 트리거
+
+- **Push**: `main` 브랜치로 push 시
+- **Pull Request**: `main` 브랜치를 대상으로 하는 PR 생성 또는 업데이트 시
+
+### CI 파이프라인 구조
+
+```yaml
+name: CI Tests (Unit & E2E)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+```
+
+### Job 1: 린트 및 단위 테스트 (`unit-test-and-lint`)
+
+**실행 환경:**
+- `ubuntu-latest`
+- Node.js 20
+
+**단계:**
+1. **코드 체크아웃** (`actions/checkout@v4`)
+2. **Node.js 설정** (`actions/setup-node@v4`)
+   - Node.js 버전: 20
+   - npm 캐시 활성화
+3. **의존성 설치**
+   ```bash
+   npm ci
+   ```
+4. **린트 실행**
+   ```bash
+   npm run lint
+   ```
+5. **단위 테스트 실행**
+   ```bash
+   npm run test
+   ```
+
+### Job 2: E2E 테스트 (`e2e-test`)
+
+**실행 환경:**
+- `ubuntu-latest`
+- Node.js 20
+- **의존성**: `unit-test-and-lint` Job 성공 시에만 실행
+
+**단계:**
+1. **코드 체크아웃** (`actions/checkout@v4`)
+2. **Node.js 설정** (`actions/setup-node@v4`)
+3. **의존성 설치**
+   ```bash
+   npm ci
+   ```
+4. **Next.js 프로젝트 빌드**
+   ```bash
+   npm run build
+   ```
+5. **E2E 테스트 실행**
+   ```bash
+   npm run test:e2e
+   ```
+   - `start-server-and-test` 패키지 사용
+   - 서버 시작 후 Cypress 테스트 실행
+
+---
+
+## ⚡ 테스트 실행 방법
+
+### 단위 테스트
+
+```bash
+# 전체 단위 테스트 실행
+npm run test
+
+# Watch 모드로 테스트 실행
+npm run test:watch
+
+# 커버리지 리포트 생성
+npm run test:coverage
+```
+
+### E2E 테스트
+
+```bash
+# Cypress 헤드리스 모드로 실행
+npm run e2e
+
+# 서버 시작 후 E2E 테스트 실행
+npm run test:e2e
+```
+
+### 린트 검사
+
+```bash
+npm run lint
+```
+
+### 개발 서버 시작
+
+```bash
+npm run dev
+```
+
+### 프로덕션 빌드
+
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 🛠️ 기술 스택
+
+### 프레임워크 & 라이브러리
+- **Next.js 15.5.4** - React 프레임워크
+- **React 19.1.0** - UI 라이브러리
+- **TypeScript 5** - 타입 안전성
+
+### 상태 관리
+- **@tanstack/react-query 5.90.2** - 서버 상태 관리
+- **Zustand 5.0.8** - 클라이언트 상태 관리
+
+### 스타일링
+- **Tailwind CSS 4** - 유틸리티 CSS 프레임워크
+- **tailwind-merge** - Tailwind 클래스 병합
+
+### 테스트
+- **Jest 30.2.0** - 단위 테스트 프레임워크
+- **React Testing Library 16.3.0** - React 컴포넌트 테스트
+- **Cypress 15.6.0** - E2E 테스트 프레임워크
+- **MSW 2.11.3** - API 모킹
+
+### 모니터링
+- **@sentry/nextjs 10.24.0** - 에러 트래킹 및 성능 모니터링
+
+### DevOps
+- **GitHub Actions** - CI/CD 파이프라인
+- **start-server-and-test** - E2E 테스트 서버 관리
+
+### HTTP 클라이언트
+- **Axios 1.12.2** - HTTP 요청 라이브러리
+
+---
+
+## 📝 환경 변수
+
+프로젝트 실행을 위해 다음 환경 변수가 필요합니다:
+
+```env
+OMDB_API_KEY=your_api_key_here
+```
+
+---
+
+## 📄 라이선스
+
+이 프로젝트는 학습 및 실습 목적으로 작성되었습니다.
